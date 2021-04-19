@@ -93,7 +93,6 @@ namespace ChessBrowser
             }
         }
 
-
         /// <summary>
         /// Queries the database for games that match all the given filters.
         /// The filters are taken from the various controls in the GUI.
@@ -129,30 +128,96 @@ namespace ChessBrowser
 
                     MySqlCommand cmd = new MySqlCommand();
                     cmd.Connection = conn;
+                    // Reader that will be used to get results
+                    MySqlDataReader reader;
 
+                    // Prepare statements
+                    string whiteParam = "";
+                    bool includeWhite = false;
+                    if (white != "")
+                    {
+                        whiteParam = " and WhitePlayer.Name=@whitePlayer ";
+                        includeWhite = true;
+                    }
+                    string blackParam = "";
+                    bool includeBlack = false;
+                    if (black != "")
+                    {
+                        blackParam = " and BlackPlayer.Name=@blackPlayer ";
+                        includeBlack = true;
+                    }
+                    string openingParam = "";
+                    bool openParam = false;
+                    if (opening != "")
+                    {
+                        openingParam = " and Games.Moves like @openingMove % ";
+                        openParam = true;
+                    }
+                    string winnerParam = ""; 
+                    if (winner == "White")
+                    {
+                        winnerParam = " and Result=\"W\"";
+                    }
+                    else if (winner == "Black")
+                    {
+                        winnerParam = " and Result=\"B\"";
+                    }
+                    else if (winner == "Draw")
+                    {
+                        winnerParam = " and Result=\"D\"";
+                    }
+                    string dateParam = "";
+                    if (useDate == true)
+                    {
+                        dateParam = " and Date between date(\"" + start.ToString("yyyy-MM-dd") + "\") and date(\"" + end.ToString("yyyy-MM-dd") + "\")";
+                    }
+                    string movesParam = "";
+                    if (showMoves)
+                    {
+                        movesParam = ", Games.Moves ";
+                    }
 
+                    // No need for 
+                    cmd.CommandText = "SELECT Events.Name as Event, Events.Site, Date, WhitePlayer.Name as White, WhitePlayer.Elo as WhiteElo, BlackPlayer.Name as Black, BlackPlayer.Elo as BlackElo, Games.Result" + movesParam
+                    + " FROM Games NATURAL JOIN Events INNER JOIN Players as BlackPlayer ON BlackPlayer.pID=Games.BlackPlayer " + blackParam + " INNER JOIN " 
+                    + "Players as WhitePlayer ON WhitePlayer.pID=Games.WhitePlayer " + whiteParam + openingParam + winnerParam + dateParam + ";";
+                    if (includeWhite)
+                    {
+                        cmd.Parameters.AddWithValue("@whitePlayer", white);
+                    }
+                    if (includeBlack)
+                    {
+                        cmd.Parameters.AddWithValue("@blackPlayer", black);
+                    }
+                    if (openParam)
+                    {
+                        cmd.Parameters.AddWithValue("@openingMove", opening);
+                    }
 
+                    reader = cmd.ExecuteReader();
 
+                    // Print query results
+                    // Event - Site - Date - White - Black - Result
 
-                    // TODO: Generate and execute an SQL command,
-                    //       then parse the results into an appropriate string
-                    //       and return it.
-                    //       Remember that the returned string must use \r\n newlines
+                    parsedResult = "";
+                    while (reader.Read())
+                    {
+                        parsedResult += "Event: " + reader.GetValue(0) + "\r\n";
+                        parsedResult += "Site: " + reader.GetValue(1) + "\r\n";
+                        parsedResult += "Date: " + reader.GetValue(2) + "\r\n";
+                        parsedResult += "White: " + reader.GetValue(3) + " (" + reader.GetValue(4) + ")\r\n";
+                        parsedResult += "Black: " + reader.GetValue(5) + " (" + reader.GetValue(6) + ")\r\n";
+                        parsedResult += "Result: " + reader.GetValue(7) + "\r\n";
+                        if (showMoves)
+                        {
+                            parsedResult += "Moves: " + reader.GetValue(8) + "\r\n";
+                        }
+                        parsedResult += "\r\n";
+                        numRows++;                         
+                    }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                    // Close reader
+                    reader.Close();
                     // Close connection
                     conn.Close();
                 }
@@ -164,7 +229,6 @@ namespace ChessBrowser
 
             return numRows + " results\r\n\r\n" + parsedResult;
         }
-
 
         /// <summary>
         /// Informs the progress bar that one step of work has been completed.

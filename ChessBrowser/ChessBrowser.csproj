@@ -84,8 +84,8 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\source\repos\ChessTools\ChessTools\ChessTools.csproj">
-      <Project>{4e05f449-b010-47b6-9fb1-d74ee858ae8a}</Project>
+    <ProjectReference Include="..\ChessTools\ChessTools.csproj">
+      <Project>{aaa748e9-b57d-4a21-9dec-28f39b03e5e2}</Project>
       <Name>ChessTools</Name>
     </ProjectReference>
   </ItemGroup>
